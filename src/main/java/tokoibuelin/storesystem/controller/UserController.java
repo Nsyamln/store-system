@@ -21,6 +21,12 @@ public class UserController {
         this.userService = userService;
     }
 
+    @GetMapping("/list")
+    public Response<Object> listUser(@RequestParam(value = "page", defaultValue = "1") int page,
+                                     @RequestParam(value = "size", defaultValue = "3") int size) {
+        Authentication authentication = SecurityContextHolder.getAuthentication();
+        return userService.listUsers(authentication, page, size);
+    }
     @PostMapping("/register-supplier")
     public Response<Object> registerSeller(@RequestBody RegisterSupplierReq req) {
         Authentication authentication = SecurityContextHolder.getAuthentication();

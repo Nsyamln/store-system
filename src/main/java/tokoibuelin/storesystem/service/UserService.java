@@ -5,14 +5,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import tokoibuelin.storesystem.entity.User;
 import tokoibuelin.storesystem.model.Authentication;
+import tokoibuelin.storesystem.model.Page;
 import tokoibuelin.storesystem.model.request.*;
 import tokoibuelin.storesystem.model.Response;
 import tokoibuelin.storesystem.model.response.UserDto;
 import tokoibuelin.storesystem.repository.UserRepository;
 import tokoibuelin.storesystem.util.HexUtils;
 import tokoibuelin.storesystem.util.JwtUtils;
-
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 @Service
 public class UserService extends AbstractService {
@@ -26,7 +27,17 @@ public class UserService extends AbstractService {
         final String skJwtKey = env.getProperty("jwt.secret-key");
         this.jwtKey = HexUtils.hexToBytes(skJwtKey);
     }
-
+    public Response<Object> listUsers(final Authentication authentication, final int page, final int size) {
+        return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
+            if (page <= 0 || size <= 0) {
+                return Response.badRequest();
+            }
+            Page<User> userPage = userRepository.listUsers(page, size);
+            List<UserDto> users = userPage.data().stream().map(user -> new UserDto(user.userId(), user.name())).toList();
+            Page<UserDto> p = new Page<>(userPage.totalData(), userPage.totalPage(), userPage.page(), userPage.size(), users);
+            return Response.create("09", "00", "Sukses", p);
+        });
+    }
     public Response<Object> login(final LoginReq req) {
         if (req == null) {
             return Response.badRequest();
@@ -199,13 +210,13 @@ public class UserService extends AbstractService {
             User updatedUser = new User(
                     user.userId(),
                     req.name(),
-                    user.email(),
+                    req.email(),
                     user.password(),
                     user.role(),
-                    user.address(),
-                    user.phone(),
+                    req.address(),
+                    req.phone(),
                     user.createdBy(),
-                    user.updatedBy(),
+                    authentication.id(),
                     user.deletedBy(),
                     user.createdAt(),
                     OffsetDateTime.now(),

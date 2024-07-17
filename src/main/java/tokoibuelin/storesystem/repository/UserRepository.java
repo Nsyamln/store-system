@@ -153,7 +153,7 @@ public class UserRepository {
         try {
             int rowsUpdated = jdbcTemplate.update(con -> {
                 final PreparedStatement ps = con.prepareStatement("UPDATE " + User.TABLE_NAME
-                        + " SET password=?, updated_by=?, updated_at=CURRENT_TIMESTAMP WHERE id=?");
+                        + " SET password=?, updated_by=?, updated_at=CURRENT_TIMESTAMP WHERE user_id=?");
                 ps.setString(1, newPassword);
                 ps.setString(2, userId);
                 ps.setString(3, userId);
@@ -173,7 +173,7 @@ public class UserRepository {
 
     public long deletedUser(User user) {
         try {
-            String sql = "UPDATE " + User.TABLE_NAME + " SET deleted_at=CURRENT_TIMESTAMP, deleted_by=? WHERE id=?";
+            String sql = "UPDATE " + User.TABLE_NAME + " SET deleted_at=CURRENT_TIMESTAMP, deleted_by=? WHERE user_id=?";
             return jdbcTemplate.update(sql, user.deletedBy(), user.userId());
         } catch (Exception e) {
             log.error("Failed to soft delete user: {}", e.getMessage());
@@ -182,13 +182,16 @@ public class UserRepository {
     }
 
     public boolean updateUser(final User user) {
-        final String sql = "UPDATE " + User.TABLE_NAME + " SET name = ?, updated_at = ? WHERE id = ?";
+        final String sql = "UPDATE " + User.TABLE_NAME + " SET name = ?, email = ?, address=?, phone=?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?";
         try {
             int rowsAffected = jdbcTemplate.update(con -> {
                 PreparedStatement ps = con.prepareStatement(sql);
                 ps.setString(1, user.name());
-                ps.setTimestamp(2, Timestamp.from(user.updatedAt().toInstant()));
-                ps.setString(3, user.userId());
+                ps.setString(2,user.email());
+                ps.setString(3,user.address());
+                ps.setString(4,user.phone());
+                ps.setString(5, user.userId());
+                ps.setString(6, user.userId());
                 return ps;
             });
             return rowsAffected > 0;

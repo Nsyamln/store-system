@@ -6,6 +6,7 @@ import java.sql.Statement;
 import java.time.OffsetDateTime;
 
 public record Product (
+        String productId,
         String productName,
         String description,
         Long price,
@@ -19,7 +20,7 @@ public record Product (
         OffsetDateTime updatedAt, //
         OffsetDateTime deletedAt
 
-                      ){
+                      ) {
 
     public static final String TABLE_NAME = "products";
 
@@ -39,6 +40,4 @@ public record Product (
             return null;
         }
     }
-
-
 }
