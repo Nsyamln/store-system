@@ -23,26 +23,16 @@ CREATE TABLE products (
     description TEXT,
     price DECIMAL(10, 2),
     stock INT,
-    supplier_id CHAR(5),
     product_image VARCHAR(255),
+
+    supplier_id CHAR(5),
+    purchase_price DECIMAL(10, 2),
     created_by CHAR(5) NOT NULL,
     updated_by CHAR(5),
     deleted_by CHAR(5),
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP,
     deleted_at TIMESTAMP
-);
-
-
-
-CREATE TABLE consignment_products (
-    consignment_id CHAR(5) PRIMARY KEY,
-    supplier_id CHAR(5),
-    product_id CHAR(5),
-    consignment_date DATE,
-    consignment_quantity INT,
-    purchase_price DECIMAL(10,2)
-    
 );
 
 CREATE TABLE sales (
@@ -73,9 +63,8 @@ CREATE TABLE profit_sharing (
 );
 
 
+
 ALTER TABLE products ADD CONSTRAINT `fk_prod1` FOREIGN KEY (`supplier_id`) REFERENCES `users` (`user_id`);
-ALTER TABLE consignment_products ADD CONSTRAINT `fk_cons1` FOREIGN KEY (supplier_id) REFERENCES users(user_id);
-ALTER TABLE consignment_products ADD CONSTRAINT `fk_cons2` FOREIGN KEY (product_id) REFERENCES products(product_id);
 ALTER TABLE sales ADD CONSTRAINT `fk_sale1` FOREIGN KEY (customer_id) REFERENCES users(user_id);
 ALTER TABLE sale_details ADD CONSTRAINT `fk_detail1` FOREIGN KEY (sale_id) REFERENCES sales(sale_id);
 ALTER TABLE sale_details ADD CONSTRAINT `fk_detail2` FOREIGN KEY (product_id) REFERENCES products(product_id);
@@ -150,28 +139,6 @@ BEGIN
 
     -- Mengatur ID baru pada baris yang akan dimasukkan
     SET NEW.user_id = new_id;
-END //
-
-DELIMITER ;
-
--- Membuat trigger untuk mengenerate ID Produk Titipan secara otomatis
-DELIMITER //
-
-CREATE TRIGGER generate_consignment_id
-BEFORE INSERT ON consignment_products
-FOR EACH ROW
-BEGIN
-    DECLARE last_id INT;
-    DECLARE new_id VARCHAR(10);
-
-    -- Mendapatkan nilai terbesar dari ID yang ada
-    SELECT COALESCE(MAX(CAST(SUBSTRING(consignment_id, 3) AS UNSIGNED)), 0) INTO last_id FROM consignment_products;
-
-    -- Menambahkan 1 pada nilai terbesar untuk ID baru
-    SET new_id = CONCAT('CP', LPAD(last_id + 1, 3, '0'));
-
-    -- Mengatur ID baru pada baris yang akan dimasukkan
-    SET NEW.consignment_id = new_id;
 END //
 
 DELIMITER ;
@@ -265,15 +232,15 @@ BEGIN
     SELECT
         new_sale_id,
         new_product_id,
-        cp.supplier_id,
+        pr.supplier_id,
         new_quantity,
-        (new_quantity * cp.purchase_price) AS total_purchase_price,
+        (new_quantity * pr.purchase_price) AS total_purchase_price,
         (new_quantity * NEW.price) AS total_sale_price
        -- CURDATE() -- Gunakan tanggal hari ini sebagai tanggal pembayaran
     FROM
-        consignment_products cp
+        products pr
     WHERE
-        cp.product_id = new_product_id
+        pr.product_id = new_product_id
     LIMIT 1; -- Ensure only one row is selected in case of multiple consignment records for the same product
 END //
 
@@ -294,26 +261,13 @@ BEGIN
 END //
 DELIMITER ;
 
--- Membuat trigger untuk penambahan stok di tabel produkTitipan
-DELIMITER //
-
-CREATE TRIGGER plus_stock 
-AFTER INSERT ON consignment_products
-FOR EACH ROW 
-BEGIN 
-    UPDATE products 
-    SET stock = stock + NEW.consignment_quantity
-    WHERE product_id = NEW.product_id;
-END //
-
-DELIMITER ;
 
 #---------------------------------------------------------------------
 USE elinstore
 -- Insert dummy users
 INSERT INTO users (user_id, name, email, password, role, address, phone, created_by, created_at)
 VALUES 
-('US001', 'Elin', 'elin@example.com', 'password123', 'admin', 'Jl. Raya No. 1, Ciamis', '081234567890', 'US001', NOW()),
+('US001', 'Nasya', 'nasya@example.com', '$2a$10$uIBEJjpFQcMlzSM40cBOBOKrmd6QdcHiPiwtBjm/WjMkrsHgarVTO', 'admin', 'Jl. Raya No. 1, Ciamis', '081234567890', 'US001', NOW());
 ('US002', 'Asep', 'asep@example.com', 'password123', 'supplier', 'Jl. Kebon No. 2, Ciamis', '081234567891', 'US001', NOW()),
 ('US003', 'Budi', 'budi@example.com', 'password123', 'customer', 'Jl. Pasar No. 3, Ciamis', '081234567892', 'US001', NOW());
 
@@ -340,3 +294,17 @@ VALUES
 ('DS001', 'JL001', 'PR001', 2, 20000.00),
 ('DS002', 'JL001', 'PR002', 3, 15000.00),
 ('DS003', 'JL002', 'PR002', 3, 15000.00);
+
+SELECT
+    s.sale_id,
+    s.sale_date,
+    s.total_price,
+    s.customer_id,
+    sd.detail_id,
+    sd.product_id,
+    sd.quantity,
+    sd.price
+FROM
+    sales s
+        JOIN
+    sale_details sd ON s.sale_id = sd.sale_id WHERE s.sale_date BETWEEN + req.startedAt+"AND"+req.endedAt  ;

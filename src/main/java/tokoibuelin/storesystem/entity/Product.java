@@ -13,6 +13,7 @@ public record Product (
         Long stock,
         String supplierId,
         String productImage,
+        Long purchasePrice,
         String createdBy,
         String updatedBy,
         String deletedBy,
@@ -26,7 +27,7 @@ public record Product (
 
     public PreparedStatement insert(final Connection connection) {
         try {
-            final String sql = "INSERT INTO " + TABLE_NAME + " (product_name, description, price, stock, supplier_id,product_image,created_by,  created_at) VALUES (?, ?, ?, ?, ? ,? ,? CURRENT_TIMESTAMP)";
+            final String sql = "INSERT INTO " + TABLE_NAME + " (product_name, description, price, stock, supplier_id,product_image,purchase_price, created_by,  created_at) VALUES (?, ?, ?, ?, ?, ? ,? ,? CURRENT_TIMESTAMP)";
             final PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, productName);
             ps.setString(2, description);
@@ -34,7 +35,8 @@ public record Product (
             ps.setLong(4, stock);
             ps.setString(5, supplierId);
             ps.setString(6, productImage);
-            ps.setString(7, createdBy);
+            ps.setLong(7, purchasePrice);
+            ps.setString(8, createdBy);
             return ps;
         } catch (Exception e) {
             return null;

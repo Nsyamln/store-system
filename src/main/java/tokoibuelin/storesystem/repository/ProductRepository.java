@@ -51,6 +51,7 @@ public class ProductRepository {
                         rs.getLong("stock"),
                         rs.getString("supplier_id"),
                         rs.getString("product_image"),
+                        rs.getLong("purchase_price"),
                         rs.getString("created_by"),
                         rs.getString("updated_by"),
                         rs.getString("deleted_by"),
@@ -83,13 +84,14 @@ public class ProductRepository {
             final Long stock = rs.getLong("stock");
             final String supplierId = rs.getString("supplier_id");
             final String productImage = rs.getString("product_image");
+            final Long purchasePrice = rs.getLong("purchase_price");
             final String createdBy = rs.getString("created_by");
             final String updatedBy = rs.getString("updated_by");
             final String deletedBy = rs.getString("deleted_by");
             final OffsetDateTime createdAt = rs.getTimestamp("created_at") == null ? null : rs.getTimestamp("created_at").toInstant().atOffset(ZoneOffset.UTC);
             final OffsetDateTime updatedAt = rs.getTimestamp("updated_at") == null ? null : rs.getTimestamp("updated_at").toInstant().atOffset(ZoneOffset.UTC);
             final OffsetDateTime deletedAt = rs.getTimestamp("deleted_at") == null ? null : rs.getTimestamp("deleted_at").toInstant().atOffset(ZoneOffset.UTC);
-            return new Product(id, productName, description, price, stock, supplierId, productImage, createdBy, updatedBy, deletedBy, createdAt, updatedAt, deletedAt);
+            return new Product(id, productName, description, price, stock, supplierId, productImage,purchasePrice, createdBy, updatedBy, deletedBy, createdAt, updatedAt, deletedAt);
         }));
     }
 

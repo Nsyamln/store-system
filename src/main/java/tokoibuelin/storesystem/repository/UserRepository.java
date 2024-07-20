@@ -69,10 +69,10 @@ public class UserRepository {
             return ps;
 
         }, rs -> {
-            final String userId = rs.getString("user_id");
-            if (userId != null ) {
+            if (!rs.next() ) {
                 return null;
             }
+            final String userId = rs.getString("user_id");
             final String name = rs.getString("name");
             final String password = rs.getString("password");
             final User.Role role = User.Role.valueOf(rs.getString("role"));

@@ -16,7 +16,6 @@ public record User(String userId,
                    String createdBy,
                    String updatedBy,
                    String deletedBy,
-
                    OffsetDateTime createdAt, //
                    OffsetDateTime updatedAt, //
                    OffsetDateTime deletedAt) { //

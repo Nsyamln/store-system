@@ -7,6 +7,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import tokoibuelin.storesystem.util.Base64Utils;
 import tokoibuelin.storesystem.util.HexUtils;
 
 import java.security.SecureRandom;
@@ -31,6 +32,13 @@ public class StoreSystemApplication {
 		SpringApplication.run(StoreSystemApplication.class, args);
 		byte[] hmacSha256Key = generateHmacSha256Key();
 		System.out.println("HMACSHA256 Key: " + HexUtils.bytesToHex(hmacSha256Key));
+
+		String originalString = "masyaallah";
+		byte[] originalBytes = originalString.getBytes();
+
+		// Encode string to base64
+		String base64Encoded = Base64Utils.base64Encode(originalBytes);
+		System.out.println("Base64 Encoded: " + base64Encoded);
 	}
 
 }
