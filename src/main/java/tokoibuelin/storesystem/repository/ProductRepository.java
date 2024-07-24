@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import tokoibuelin.storesystem.entity.Product;
 import tokoibuelin.storesystem.model.Page;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -47,6 +48,7 @@ public class ProductRepository {
                         rs.getString("product_id"),
                         rs.getString("product_name"),
                         rs.getString("description"),
+                        rs.getBigDecimal("unit"),
                         rs.getLong("price"),
                         rs.getLong("stock"),
                         rs.getString("supplier_id"),
@@ -80,6 +82,7 @@ public class ProductRepository {
             }
             final String productName = rs.getString("product_name");
             final String description = rs.getString("description");
+            final BigDecimal unit = rs.getBigDecimal("unit");
             final Long price = rs.getLong("price");
             final Long stock = rs.getLong("stock");
             final String supplierId = rs.getString("supplier_id");
@@ -91,7 +94,7 @@ public class ProductRepository {
             final OffsetDateTime createdAt = rs.getTimestamp("created_at") == null ? null : rs.getTimestamp("created_at").toInstant().atOffset(ZoneOffset.UTC);
             final OffsetDateTime updatedAt = rs.getTimestamp("updated_at") == null ? null : rs.getTimestamp("updated_at").toInstant().atOffset(ZoneOffset.UTC);
             final OffsetDateTime deletedAt = rs.getTimestamp("deleted_at") == null ? null : rs.getTimestamp("deleted_at").toInstant().atOffset(ZoneOffset.UTC);
-            return new Product(id, productName, description, price, stock, supplierId, productImage,purchasePrice, createdBy, updatedBy, deletedBy, createdAt, updatedAt, deletedAt);
+            return new Product(id, productName, description, unit, price, stock, supplierId, productImage,purchasePrice, createdBy, updatedBy, deletedBy, createdAt, updatedAt, deletedAt);
         }));
     }
 

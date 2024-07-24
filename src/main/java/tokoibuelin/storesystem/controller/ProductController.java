@@ -3,9 +3,8 @@ package tokoibuelin.storesystem.controller;
 import org.springframework.web.bind.annotation.*;
 import tokoibuelin.storesystem.model.Authentication;
 import tokoibuelin.storesystem.model.Response;
-import tokoibuelin.storesystem.model.request.RegisterProductReq;
+import tokoibuelin.storesystem.model.request.RegistProductReq;
 import tokoibuelin.storesystem.model.request.UpdateProductReq;
-import tokoibuelin.storesystem.model.request.UpdateProfileReq;
 import tokoibuelin.storesystem.service.ProductService;
 import tokoibuelin.storesystem.util.SecurityContextHolder;
 
@@ -24,7 +23,7 @@ public class ProductController {
 //        return productService.listProducts(authentication, page, size);
 //    }
     @PostMapping("/add-product")
-    public Response<Object> createProduct(@RequestBody RegisterProductReq req){
+    public Response<Object> createProduct(@RequestBody RegistProductReq req){
         Authentication authentication = SecurityContextHolder.getAuthentication();
         return productService.createProduct(authentication,req);
     }

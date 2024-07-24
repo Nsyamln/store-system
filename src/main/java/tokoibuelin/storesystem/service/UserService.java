@@ -3,12 +3,14 @@ package tokoibuelin.storesystem.service;
 import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import tokoibuelin.storesystem.entity.Address;
 import tokoibuelin.storesystem.entity.User;
 import tokoibuelin.storesystem.model.Authentication;
 import tokoibuelin.storesystem.model.Page;
 import tokoibuelin.storesystem.model.request.*;
 import tokoibuelin.storesystem.model.Response;
 import tokoibuelin.storesystem.model.response.UserDto;
+import tokoibuelin.storesystem.repository.AddressRepository;
 import tokoibuelin.storesystem.repository.UserRepository;
 import tokoibuelin.storesystem.util.HexUtils;
 import tokoibuelin.storesystem.util.JwtUtils;
@@ -18,14 +20,16 @@ import java.util.Optional;
 @Service
 public class UserService extends AbstractService {
     private final UserRepository userRepository;
+    private final AddressRepository addressRepository;
     private final PasswordEncoder passwordEncoder;
     private final byte[] jwtKey;
 
-    public UserService(final Environment env, final UserRepository userRepository, final PasswordEncoder passwordEncoder) {
+    public UserService(final Environment env, final UserRepository userRepository, final PasswordEncoder passwordEncoder, final AddressRepository addressRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         final String skJwtKey = env.getProperty("jwt.secret-key");
         this.jwtKey = HexUtils.hexToBytes(skJwtKey);
+        this.addressRepository = addressRepository;
     }
     public Response<Object> listUsers(final Authentication authentication, final int page, final int size) {
         return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
@@ -66,7 +70,7 @@ public class UserService extends AbstractService {
         return Response.create("08", "00", "Sukses", token);
     }
 
-    public Response<Object> registerSupplier(final Authentication authentication, final RegisterSupplierReq req) {
+    public Response<Object> registerSupplier(final Authentication authentication, final RegistUserReq req) {
         return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
             if (req == null) {
                 return Response.badRequest();
@@ -78,7 +82,6 @@ public class UserService extends AbstractService {
                     req.email(), //
                     encoded, //
                     User.Role.PEMASOK,//
-                    req.address(),
                     req.phone(),
                     authentication.id(),
                     null,
@@ -89,26 +92,42 @@ public class UserService extends AbstractService {
 
             );
             final Long saved = userRepository.saveSupplier(user);
-            if (0L == saved) {
-                return Response.create("05", "01", "Gagal mendaftarkan seller", null);
+
+            if (0L != saved) {
+                Address address = new Address(
+                        null,
+                        user.userId(),
+                        req.street(),
+                        req.rt(),
+                        req.rw(),
+                        req.village(),
+                        req.district(),
+                        req.city(),
+                        req.postalCode()
+                );
+                final long save = addressRepository.saveAddress(address);
+                if(0L == save){
+                    return Response.create("05", "01", "Gagal mendaftarkan seller", null);
+                }
+                return Response.create("05", "00", "Sukses", saved);
             }
-            return Response.create("05", "00", "Sukses", saved);
+
+            return Response.create("05", "01", "Gagal mendaftarkan seller", null);
         });
     }
 
-    public Response<Object> registerBuyer(final Authentication authentication, final RegisterBuyerReq req) {
+    public Response<Object> registerBuyer(final Authentication authentication, final RegistUserReq req) {
         return precondition(authentication, User.Role.PEMBELI).orElseGet(() -> {
             if (req == null) {
                 return Response.badRequest();
             }
             final String encoded = passwordEncoder.encode(req.password());
-            final User user = new User(
-                    null,
-                    req.name(),
-                    req.email(),
-                    encoded,
-                    User.Role.PEMBELI, // Updated role to PEMBELI
-                    req.address(),
+            final User user = new User( //
+                    null, //
+                    req.name(),//
+                    req.email(), //
+                    encoded, //
+                    User.Role.PEMASOK,//
                     req.phone(),
                     authentication.id(),
                     null,
@@ -116,12 +135,30 @@ public class UserService extends AbstractService {
                     OffsetDateTime.now(),
                     null,
                     null
+
             );
-            final Long saved = userRepository.saveSupplier(user); // This might also need to change to saveBuyer if there's a separate method
-            if (0L == saved) {
-                return Response.create("05", "01", "Gagal mendaftarkan buyer", null); // Updated message
+            final Long saved = userRepository.saveBuyer(user);
+
+            if (0L != saved) {
+                Address address = new Address(
+                        null,
+                        user.userId(),
+                        req.street(),
+                        req.rt(),
+                        req.rw(),
+                        req.village(),
+                        req.district(),
+                        req.city(),
+                        req.postalCode()
+                );
+                final long save = addressRepository.saveAddress(address);
+                if (0L == save) {
+                    return Response.create("05", "01", "Gagal mendaftarkan seller", null);
+                }
+                return Response.create("05", "00", "Sukses", saved);
             }
-            return Response.create("05", "00", "Sukses", saved);
+
+            return Response.create("05", "01", "Gagal mendaftarkan seller", null);
         });
     }
 
@@ -182,7 +219,6 @@ public class UserService extends AbstractService {
                     dataUser.email(),
                     dataUser.password(),
                     dataUser.role(),
-                    dataUser.address(),
                     dataUser.phone(),
                     dataUser.createdBy(),
                     dataUser.updatedBy(),
@@ -213,14 +249,14 @@ public class UserService extends AbstractService {
                     req.email(),
                     user.password(),
                     user.role(),
-                    req.address(),
                     req.phone(),
                     user.createdBy(),
                     authentication.id(),
                     user.deletedBy(),
                     user.createdAt(),
                     OffsetDateTime.now(),
-                    user.deletedAt());
+                    user.deletedAt()
+            );
 
             if (userRepository.updateUser(updatedUser)) {
                 return Response.create("07", "00", "Profil berhasil diupdate", null);

@@ -4,9 +4,12 @@ import tokoibuelin.storesystem.entity.SaleDetails;
 
 import java.util.List;
 
-public record SaleReq(
-     String saleId,
+public record OfflineSaleReq(
+
      Long totalPrice,
      String customerId,
+     String orderId,
+     String paymentMethod,
+     Long amountPaid,
      List<SaleDetails> saleDetails) {
 }

@@ -1,16 +1,13 @@
 package tokoibuelin.storesystem.controller;
 
 import tokoibuelin.storesystem.model.Authentication;
-import tokoibuelin.storesystem.model.request.RegisterBuyerReq;
 import tokoibuelin.storesystem.model.Response;
-import tokoibuelin.storesystem.model.request.RegisterSupplierReq;
+import tokoibuelin.storesystem.model.request.RegistUserReq;
 import tokoibuelin.storesystem.model.request.ResetPasswordReq;
 import tokoibuelin.storesystem.model.request.UpdateProfileReq;
 import tokoibuelin.storesystem.util.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import tokoibuelin.storesystem.service.UserService;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/secured/user")
@@ -28,13 +25,13 @@ public class UserController {
         return userService.listUsers(authentication, page, size);
     }
     @PostMapping("/register-supplier")
-    public Response<Object> registerSeller(@RequestBody RegisterSupplierReq req) {
+    public Response<Object> registerSeller(@RequestBody RegistUserReq req) {
         Authentication authentication = SecurityContextHolder.getAuthentication();
         return userService.registerSupplier(authentication, req);
     }
 
     @PostMapping("/register-buyer")
-    public Response<Object> registerBuyer(@RequestBody RegisterBuyerReq req) {
+    public Response<Object> registerBuyer(@RequestBody RegistUserReq req) {
         Authentication authentication = SecurityContextHolder.getAuthentication();
         return userService.registerBuyer(authentication, req);
     }

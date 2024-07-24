@@ -1,4 +1,6 @@
 package tokoibuelin.storesystem.model.request;
 
-public record UpdateProductReq(String productName, String description, Long price, String productImage) {
+import java.math.BigDecimal;
+
+public record UpdateProductReq(String productName, String description, BigDecimal unit, Long price, String productImage) {
 }

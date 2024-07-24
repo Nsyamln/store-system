@@ -7,7 +7,6 @@ CREATE TABLE users (
     email VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     role VARCHAR(32) NOT NULL,
-    address TEXT NOT NULL,
     phone VARCHAR(15) NOT NULL,   
     created_by CHAR(5) NOT NULL,
     updated_by CHAR(5),
@@ -16,11 +15,25 @@ CREATE TABLE users (
     updated_at TIMESTAMP,
     deleted_at TIMESTAMP
 );
+CREATE TABLE addresses (
+    address_id CHAR(5) PRIMARY KEY,
+    user_id CHAR(5) NOT NULL,
+    street TEXT NOT NULL,
+    rt VARCHAR(3) NOT NULL,
+    rw VARCHAR(3) NOT NULL,
+    village VARCHAR(255) NOT NULL,
+    district VARCHAR(255) NOT NULL,
+    city VARCHAR(255) NOT NULL,
+    postal_code VARCHAR(5) NOT NULL
+    
+);
+
 
 CREATE TABLE products (
     product_id CHAR(5) PRIMARY KEY,
     product_name VARCHAR(255),
     description TEXT,
+    satuan INT,
     price DECIMAL(10, 2),
     stock INT,
     product_image VARCHAR(255),
@@ -39,16 +52,22 @@ CREATE TABLE sales (
     sale_id CHAR(5) PRIMARY KEY,
     sale_date DATE,
     total_price DECIMAL(10, 2),
-    customer_id CHAR(5)
+    customer_id CHAR(5),
+    order_id CHAR(5),
+    amount_paid DECIMAL(10, 2),
+    payment_method VARCHAR(50)
 );
+
 
 CREATE TABLE sale_details (
     detail_id CHAR(5) PRIMARY KEY,
     sale_id CHAR(5),
     product_id CHAR(5),
+    product_name VARCHAR(255),
     quantity INT,
     price DECIMAL(10, 2)
 );
+
 
 CREATE TABLE profit_sharing (
     profit_sharing_id CHAR(5) PRIMARY KEY,
@@ -61,7 +80,25 @@ CREATE TABLE profit_sharing (
     status VARCHAR (32),
     payment_date DATE
 );
+-- Create table for orders
+CREATE TABLE orders (
+    order_id CHAR(5) PRIMARY KEY,
+    order_date TIMESTAMP NOT NULL,
+    customer_id CHAR(5) NOT NULL,
+    delivery_address TEXT NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    created_by CHAR(5) NOT NULL,
+    updated_by CHAR(5),
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP
+);
 
+-- Modify the sales table to include an order_id
+ALTER TABLE sales ADD COLUMN order_id CHAR(5);
+
+
+alter table addresses add constraint fk_addr1 foreign key (user_id) references users (user_id);
+ALTER TABLE sales ADD CONSTRAINT fk_sale2 FOREIGN KEY (order_id) REFERENCES orders (order_id);
 ALTER TABLE products ADD CONSTRAINT fk_prod1 FOREIGN KEY (supplier_id) REFERENCES users (user_id);
 ALTER TABLE sales ADD CONSTRAINT fk_sale1 FOREIGN KEY (customer_id) REFERENCES users (user_id);
 ALTER TABLE sale_details ADD CONSTRAINT fk_detail1 FOREIGN KEY (sale_id) REFERENCES sales (sale_id);
@@ -197,6 +234,31 @@ CREATE TRIGGER generate_detail_id
 BEFORE INSERT ON sale_details
 FOR EACH ROW
 EXECUTE FUNCTION generate_detail_id();
+------------------------------------------------------------ generate id order
+CREATE OR REPLACE FUNCTION generate_order_id() RETURNS TRIGGER AS $$
+DECLARE
+last_id INT;
+    new_id VARCHAR(10);
+BEGIN
+    -- Mendapatkan nilai terbesar dari ID yang ada
+SELECT COALESCE(MAX(CAST(SUBSTRING(order_id FROM 3) AS INTEGER)), 0)
+INTO last_id
+FROM orders;
+
+-- Menambahkan 1 pada nilai terbesar untuk ID baru
+new_id := CONCAT('OR', LPAD((last_id + 1)::TEXT, 3, '0'));
+
+    -- Mengatur ID baru pada baris yang akan dimasukkan
+    NEW.order_id := new_id;
+
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER generate_order_id
+    BEFORE INSERT ON orders
+    FOR EACH ROW
+    EXECUTE FUNCTION generate_order_id();
 
 ------------------------------------------------------------ update total harga  
 CREATE OR REPLACE FUNCTION update_total_price() RETURNS TRIGGER AS $$

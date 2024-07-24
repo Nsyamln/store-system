@@ -8,7 +8,6 @@ import tokoibuelin.storesystem.model.Page;
 import tokoibuelin.storesystem.model.request.*;
 import tokoibuelin.storesystem.model.Response;
 import tokoibuelin.storesystem.model.response.ProductDto;
-import tokoibuelin.storesystem.model.response.UserDto;
 import tokoibuelin.storesystem.repository.ProductRepository;
 
 import java.time.OffsetDateTime;
@@ -32,7 +31,7 @@ public class ProductService extends AbstractService{
             return Response.create("09", "00", "Sukses", p);
         });
     }
-    public Response<Object> createProduct(final Authentication authentication, final RegisterProductReq req) {
+    public Response<Object> createProduct(final Authentication authentication, final RegistProductReq req) {
         return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
             if (req == null) {
                 return Response.badRequest();
@@ -42,6 +41,7 @@ public class ProductService extends AbstractService{
                     null, //
                     req.productName(),//
                     req.description(), //
+                    req.unit(),
                     req.price(), //
                     req.stock(),//
                     req.supplierId(),
@@ -81,6 +81,7 @@ public class ProductService extends AbstractService{
                     product.productId(),
                     product.productName(),
                     product.description(),
+                    product.unit(),
                     product.price(),
                     product.stock(),
                     product.supplierId(),
@@ -113,6 +114,7 @@ public class ProductService extends AbstractService{
                     product.productId(),
                     req.productName(),
                     req.description(),
+                    req.unit(),
                     req.price(),
                     product.stock(),
                     product.supplierId(),
@@ -146,6 +148,7 @@ public class ProductService extends AbstractService{
                     product.productId(),
                     product.productName(),
                     product.description(),
+                    product.unit(),
                     product.price(),
                     newStock,
                     product.supplierId(),

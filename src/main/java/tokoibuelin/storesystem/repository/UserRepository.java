@@ -47,7 +47,6 @@ public class UserRepository {
                         rs.getString("email"), //
                         rs.getString("password"), //
                         role, //
-                        rs.getString("address"),//
                         rs.getString("phone"),//
                         rs.getString("created_by"), //
                         rs.getString("updated_by"), //
@@ -76,7 +75,6 @@ public class UserRepository {
             final String name = rs.getString("name");
             final String password = rs.getString("password");
             final User.Role role = User.Role.valueOf(rs.getString("role"));
-            final String address = rs.getString("address");
             final String phone = rs.getString("phone");
             final String createdBy = rs.getString("created_by");
             final String updatedBy = rs.getString("updated_by");
@@ -87,7 +85,7 @@ public class UserRepository {
                     : rs.getTimestamp("updated_at").toInstant().atOffset(ZoneOffset.UTC);
             final OffsetDateTime deletedAt = rs.getTimestamp("deleted_at") == null ? null
                     : rs.getTimestamp("deleted_at").toInstant().atOffset(ZoneOffset.UTC);
-            return new User(userId, name, email, password, role, address, phone, createdBy, updatedBy, deletedBy, createdAt, updatedAt,
+            return new User(userId, name, email, password, role, phone, createdBy, updatedBy, deletedBy, createdAt, updatedAt,
                     deletedAt);
         }));
     }
@@ -98,7 +96,7 @@ public class UserRepository {
             return Optional.empty();
         }
         return Optional.ofNullable(jdbcTemplate.query(con -> {
-            final PreparedStatement ps = con.prepareStatement("SELECT * FROM " + User.TABLE_NAME + " WHERE id=?");
+            final PreparedStatement ps = con.prepareStatement("SELECT * FROM " + User.TABLE_NAME + " WHERE user_id=?");
             ps.setString(1, id);
             return ps;
         }, rs -> {
@@ -109,7 +107,6 @@ public class UserRepository {
             final String email = rs.getString("email");
             final String password = rs.getString("password");
             final User.Role role = User.Role.valueOf(rs.getString("role"));
-            final String address = rs.getString("address");
             final String phone = rs.getString("phone");
             final String createdBy = rs.getString("created_by");
             final String updatedBy = rs.getString("updated_by");
@@ -117,7 +114,7 @@ public class UserRepository {
             final OffsetDateTime createdAt = rs.getTimestamp("created_at") == null ? null : rs.getTimestamp("created_at").toInstant().atOffset(ZoneOffset.UTC);
             final OffsetDateTime updatedAt = rs.getTimestamp("updated_at") == null ? null : rs.getTimestamp("updated_at").toInstant().atOffset(ZoneOffset.UTC);
             final OffsetDateTime deletedAt = rs.getTimestamp("deleted_at") == null ? null : rs.getTimestamp("deleted_at").toInstant().atOffset(ZoneOffset.UTC);
-            return new User(id, name, email, password, role, address, phone, createdBy, updatedBy, deletedBy, createdAt, updatedAt, deletedAt);
+            return new User(id, name, email, password, role, phone, createdBy, updatedBy, deletedBy, createdAt, updatedAt, deletedAt);
         }));
     }
 
@@ -182,16 +179,15 @@ public class UserRepository {
     }
 
     public boolean updateUser(final User user) {
-        final String sql = "UPDATE " + User.TABLE_NAME + " SET name = ?, email = ?, address=?, phone=?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?";
+        final String sql = "UPDATE " + User.TABLE_NAME + " SET name = ?, email = ?, phone=?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?";
         try {
             int rowsAffected = jdbcTemplate.update(con -> {
                 PreparedStatement ps = con.prepareStatement(sql);
                 ps.setString(1, user.name());
                 ps.setString(2,user.email());
-                ps.setString(3,user.address());
-                ps.setString(4,user.phone());
+                ps.setString(3,user.phone());
+                ps.setString(4, user.userId());
                 ps.setString(5, user.userId());
-                ps.setString(6, user.userId());
                 return ps;
             });
             return rowsAffected > 0;
