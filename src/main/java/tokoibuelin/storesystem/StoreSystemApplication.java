@@ -15,30 +15,11 @@ import java.util.Base64;
 
 @SpringBootApplication
 public class StoreSystemApplication {
-	public static byte[] generateHmacSha256Key() {
-		try {
-			KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
-			SecureRandom secureRandom = new SecureRandom(); // Pengaturan randomizer yang aman
-			keyGen.init(256, secureRandom); // Inisialisasi dengan panjang 256 bits
-			SecretKey secretKey = keyGen.generateKey(); // Membuat secret key
 
-			return secretKey.getEncoded(); // Mendapatkan representasi byte dari secret key
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException("Failed to generate HMACSHA256 key", e);
-		}
-	}
 	public static void main(String[] args) {
 		System.out.println("hello world ");
 		SpringApplication.run(StoreSystemApplication.class, args);
-		byte[] hmacSha256Key = generateHmacSha256Key();
-		System.out.println("HMACSHA256 Key: " + HexUtils.bytesToHex(hmacSha256Key));
 
-		String originalString = "masyaallah";
-		byte[] originalBytes = originalString.getBytes();
-
-		// Encode string to base64
-		String base64Encoded = Base64Utils.base64Encode(originalBytes);
-		System.out.println("Base64 Encoded: " + base64Encoded);
 	}
 
 }
