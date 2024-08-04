@@ -15,6 +15,7 @@ import java.util.Base64;
 
 @SpringBootApplication
 public class StoreSystemApplication {
+<<<<<<< HEAD
 //	public static byte[] generateHmacSha256Key() {
 //		try {
 //			KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
@@ -39,6 +40,13 @@ public class StoreSystemApplication {
 //		// Encode string to base64
 //		String base64Encoded = Base64Utils.base64Encode(originalBytes);
 //		System.out.println("Base64 Encoded: " + base64Encoded);
+=======
+
+	public static void main(String[] args) {
+		System.out.println("hello world ");
+		SpringApplication.run(StoreSystemApplication.class, args);
+
+>>>>>>> d6e081891fe819ab569ec7be3584e93d6c6378a2
 	}
 
 }
