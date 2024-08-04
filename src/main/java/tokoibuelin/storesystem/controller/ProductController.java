@@ -16,12 +16,12 @@ public class ProductController {
     public ProductController(ProductService productService){
         this.productService = productService;
     }
-//    @GetMapping("/list")
-//    public Response<Object> listUser(@RequestParam(value = "page", defaultValue = "1") int page,
-//                                     @RequestParam(value = "size", defaultValue = "3") int size) {
-//        Authentication authentication = SecurityContextHolder.getAuthentication();
-//        return productService.listProducts(authentication, page, size);
-//    }
+    @GetMapping("/list")
+    public Response<Object> listProducts(@RequestParam(value = "page", defaultValue = "1") int page,
+                                     @RequestParam(value = "size", defaultValue = "3") int size) {
+        Authentication authentication = SecurityContextHolder.getAuthentication();
+        return productService.listProducts(authentication, page, size);
+    }
     @PostMapping("/add-product")
     public Response<Object> createProduct(@RequestBody RegistProductReq req){
         Authentication authentication = SecurityContextHolder.getAuthentication();
@@ -33,10 +33,15 @@ public class ProductController {
         return productService.updateProduct(authentication, req);
     }
 
-    @DeleteMapping("/delete-product/{id}")
-    public Response<Object> deleteUser(@PathVariable String userId) {
-        //Long userId = requestBody.get("id");
+    @PostMapping("/add-stock/{addStock}/{productId}")
+    public Response<Object> addStockProduct( @PathVariable Long addStock, @PathVariable String productId ) {
         Authentication authentication = SecurityContextHolder.getAuthentication();
-        return productService.deleteProduct(authentication, userId);
+        return productService.addStockProduct(authentication, addStock,productId);
+    }
+
+    @DeleteMapping("/delete-product/{productId}/{}")
+    public Response<Object> deleteProduct(@PathVariable String productId) {
+        Authentication authentication = SecurityContextHolder.getAuthentication();
+        return productService.deleteProduct(authentication, productId);
     }
 }

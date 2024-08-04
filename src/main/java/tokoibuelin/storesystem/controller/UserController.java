@@ -9,6 +9,7 @@ import tokoibuelin.storesystem.util.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import tokoibuelin.storesystem.service.UserService;
 
+
 @RestController
 @RequestMapping("/secured/user")
 public class UserController {
@@ -27,6 +28,7 @@ public class UserController {
     @PostMapping("/register-supplier")
     public Response<Object> registerSeller(@RequestBody RegistUserReq req) {
         Authentication authentication = SecurityContextHolder.getAuthentication();
+        System.out.println("Authentication in controller: {}"+ authentication);
         return userService.registerSupplier(authentication, req);
     }
 
@@ -49,10 +51,9 @@ public class UserController {
         return userService.updateProfile(authentication, req);
     }
 
-    @DeleteMapping("/delete-user/{id}")
+    @DeleteMapping("/delete-user/{userId}")
     public Response<Object> deleteUser(@PathVariable String userId) {
-        //Long userId = requestBody.get("id");
         Authentication authentication = SecurityContextHolder.getAuthentication();
         return userService.deletedUser(authentication, userId);
     }
-}
+   }

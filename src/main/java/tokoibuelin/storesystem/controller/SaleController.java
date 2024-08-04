@@ -4,7 +4,6 @@ import org.springframework.web.bind.annotation.*;
 import tokoibuelin.storesystem.model.Authentication;
 import tokoibuelin.storesystem.model.Response;
 import tokoibuelin.storesystem.model.request.OnlineSaleReq;
-import tokoibuelin.storesystem.model.request.ReportReq;
 import tokoibuelin.storesystem.model.request.OfflineSaleReq;
 import tokoibuelin.storesystem.service.OrderService;
 import tokoibuelin.storesystem.service.SaleService;
@@ -32,10 +31,10 @@ public class SaleController {
     }
 
 
-    @PostMapping("/report")
-    public Response<Object> generatedSalesReport(@RequestBody ReportReq req){
-        return saleService.generateReport(req);
-    }
+
+
+
+
 
 
 }

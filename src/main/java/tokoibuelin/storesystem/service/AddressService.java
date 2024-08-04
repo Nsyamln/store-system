@@ -1,5 +1,7 @@
 package tokoibuelin.storesystem.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import tokoibuelin.storesystem.entity.Address;
 import tokoibuelin.storesystem.entity.User;
@@ -17,6 +19,8 @@ import java.util.Optional;
 public class AddressService extends AbstractService{
     private final AddressRepository addressRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
     public  AddressService(final AddressRepository addressRepository){
         this.addressRepository = addressRepository;
     }
@@ -48,7 +52,41 @@ public class AddressService extends AbstractService{
         });
     }
 
+    public String extractCity(String address) {
+        // Daftar istilah yang dapat digunakan
+        String[] keywords = {"Kota", "Kabupaten", "Kab"};
 
+        for (String keyword : keywords) {
+            int keywordIndex = address.indexOf(keyword);
+            if (keywordIndex != -1) {
+                // Ambil substring setelah keyword
+                String afterKeyword = address.substring(keywordIndex + keyword.length()).trim();
+
+                // Ambil nama kota sebelum kode pos
+                String[] parts = afterKeyword.split(" ");
+                if (parts.length > 1) {
+                    return parts[0];
+                }
+            }
+        }
+        return null; // atau return "" jika kota tidak ditemukan
+    }
+
+    public Address getAddressById(String userId) {
+        String sql = "SELECT * FROM addresses WHERE user_id = ?";
+        return jdbcTemplate.queryForObject(sql, new Object[]{userId}, (rs, rowNum) ->
+                new Address(
+                        rs.getString("address_id"),
+                        rs.getString("user_id"),
+                        rs.getString("street"),
+                        rs.getString("rt"),
+                        rs.getString("rw"),
+                        rs.getString("village"),
+                        rs.getString("district"),
+                        rs.getString("city"),
+                        rs.getString("postal_code")
+                ));
+    }
 
     private static final List<String> PRIANGAN_TIMUR_CITIES = Arrays.asList(
             "Bandung", "Tasikmalaya", "Ciamis", "Garut", "Sumedang", "Cianjur", "Banjar", "Pangandaran"

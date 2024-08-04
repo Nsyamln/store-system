@@ -9,9 +9,10 @@ import org.springframework.stereotype.Repository;
 import tokoibuelin.storesystem.entity.Address;
 import tokoibuelin.storesystem.entity.User;
 
-import java.sql.PreparedStatement;
+import java.sql.*;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -24,20 +25,80 @@ public class AddressRepository {
     public AddressRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
-
-    public long saveAddress(final Address address) {
-        final KeyHolder keyHolder = new GeneratedKeyHolder();
+    public void testInsertAddress() {
         try {
-            if (jdbcTemplate.update(con -> Objects.requireNonNull(address.insert(con)), keyHolder) != 1) {
-                return 0L;
-            } else {
-                return Objects.requireNonNull(keyHolder.getKey()).longValue();
+            Connection connection = jdbcTemplate.getDataSource().getConnection();
+            String sql = "INSERT INTO addresses (user_id, street, rt, rw, village, district, city, postal_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, "US005");
+            ps.setString(2, "Jl Sukapura");
+            ps.setString(3, "021");
+            ps.setString(4, "002");
+            ps.setString(5, "Desa Sukaraja");
+            ps.setString(6, "Kecamatan Cikoneng");
+            ps.setString(7, "Kabupaten Ciamis");
+            ps.setString(8, "46268");
+            int updateCount = ps.executeUpdate();
+            System.out.println("Rows affected: " + updateCount);
+            ResultSet generatedKeys = ps.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                System.out.println("Generated key: " + generatedKeys.getString(1));
             }
-        } catch (Exception e) {
-            log.error("{}", e.getMessage());
-            return 0L;
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
+
+    public String saveAddress(final Address address) {
+        final KeyHolder keyHolder = new GeneratedKeyHolder();
+        try {
+            int updateCount = jdbcTemplate.update(con -> {
+                PreparedStatement ps = address.insert(con);
+                return ps;
+            }, keyHolder);
+
+            if (updateCount != 1) {
+                log.warn("Update count was not 1, it was: {}", updateCount);
+                return null;
+            }
+
+            Map<String, Object> keys = keyHolder.getKeys();
+            if (keys != null && keys.containsKey("address_id")) {
+                return (String) keys.get("address_id");
+            }
+
+            return null;
+        } catch (Exception e) {
+            log.error("Error during saveAddress: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    //    public String saveAddress(final Address address) {
+//        final KeyHolder keyHolder = new GeneratedKeyHolder();
+//        try {
+//            int updateCount = jdbcTemplate.update(con -> {
+//                PreparedStatement ps = address.insert(con);
+//                return ps;
+//            }, keyHolder);
+//
+//            if (updateCount != 1) {
+//                return null; // atau return 0L sesuai kebutuhan
+//            }
+//
+//            // Ambil hasil dari KeyHolder sebagai String
+//            Map<String, Object> keys = keyHolder.getKeys();
+//            if (keys != null && keys.containsKey("address_id")) {
+//                return (String) keys.get("address_id");
+//            }
+//
+//            return null;
+//        } catch (Exception e) {
+//            log.error("Error during saveAddress: {}", e.getMessage());
+//            return null; // atau return 0L sesuai kebutuhan
+//        }
+//    }
     public Optional<Address> findById(String userid) {
         System.out.println("ID nya : " + userid);
         if (userid == null || userid == "") {

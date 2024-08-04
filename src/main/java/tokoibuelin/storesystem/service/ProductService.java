@@ -20,7 +20,7 @@ public class ProductService extends AbstractService{
     public ProductService(final ProductRepository productRepository){
         this.productRepository =  productRepository;
     }
-    public Response<Object> listUsers(final Authentication authentication, final int page, final int size) {
+    public Response<Object> listProducts(final Authentication authentication, final int page, final int size) {
         return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
             if (page <= 0 || size <= 0) {
                 return Response.badRequest();
@@ -55,8 +55,8 @@ public class ProductService extends AbstractService{
                     null
 
             );
-            final Long saved = productRepository.saveProduct(product);
-            if (0L == saved) {
+            final String saved = productRepository.saveProduct(product);
+            if (null == saved) {
                 return Response.create("05", "01", "Gagal menambahkan Product", null);
             }
             return Response.create("05", "00", "Sukses", saved);
@@ -105,7 +105,7 @@ public class ProductService extends AbstractService{
 
     public Response<Object> updateProduct(final Authentication authentication, final UpdateProductReq req) {
         return precondition(authentication, User.Role.ADMIN, User.Role.PEMBELI, User.Role.PEMASOK).orElseGet(() -> {
-            Optional<Product> productOpt = productRepository.findById(authentication.id());
+            Optional<Product> productOpt = productRepository.findById(req.productId());
             if (productOpt.isEmpty()) {
                 return Response.create("07", "01", "Produk  tidak ditemukan", null);
             }
@@ -135,9 +135,9 @@ public class ProductService extends AbstractService{
         });
     }
 
-    public Response<Object> addStockProduct(final Authentication authentication, final Long addStock) {
+    public Response<Object> addStockProduct(final Authentication authentication, final Long addStock, final String produkId) {
         return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
-            Optional<Product> productOpt = productRepository.findById(authentication.id());
+            Optional<Product> productOpt = productRepository.findById(produkId);
             if (productOpt.isEmpty()) {
                 return Response.create("07", "01", "Produk  tidak ditemukan", null);
             }

@@ -10,7 +10,7 @@ public record Product (
         String productId,
         String productName,
         String description,
-        BigDecimal unit,
+        Long unit,
         Long price,
         Long stock,
         String supplierId,
@@ -19,8 +19,8 @@ public record Product (
         String createdBy,
         String updatedBy,
         String deletedBy,
-        OffsetDateTime createdAt, //
-        OffsetDateTime updatedAt, //
+        OffsetDateTime createdAt,
+        OffsetDateTime updatedAt,
         OffsetDateTime deletedAt
 
                       ) {
@@ -29,11 +29,11 @@ public record Product (
 
     public PreparedStatement insert(final Connection connection) {
         try {
-            final String sql = "INSERT INTO " + TABLE_NAME + " (product_name, description,unit, price, stock, supplier_id,product_image,purchase_price, created_by,  created_at) VALUES (?, ?, ?, ?, ?, ?, ? ,? ,? CURRENT_TIMESTAMP)";
+            final String sql = "INSERT INTO " + TABLE_NAME + " (product_name, description,unit, price, stock, supplier_id,product_image,purchase_price, created_by,  created_at) VALUES (?, ?, ?, ?, ?, ?, ? ,? ,?, CURRENT_TIMESTAMP)";
             final PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, productName);
             ps.setString(2, description);
-            ps.setBigDecimal(3,unit);
+            ps.setLong(3,unit);
             ps.setLong(4, price);
             ps.setLong(5, stock);
             ps.setString(6, supplierId);

@@ -22,6 +22,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         this.jwtKey = jwtKey;
     }
 
+
     @Override
     protected void doFilterInternal(HttpServletRequest servletRequest, HttpServletResponse servletResponse, FilterChain filterChain) throws ServletException, IOException {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
@@ -32,13 +33,13 @@ public class AuthenticationFilter extends OncePerRequestFilter {
                 JwtUtils.Jwt jwt = JwtUtils.hs256Parse(token, jwtKey);
                 ObjectMapper mapper = new ObjectMapper();
                 Map map = mapper.readValue(jwt.payload(), Map.class);
-                Number id = (Number) map.get("sub");
+                String id = (String) map.get("sub");
                 User.Role role = User.Role.fromString((String) map.get("role"));
                 Number iat = (Long) map.get("iat");
                 Number exp = (Number) map.get("exp");
                 long expiration = iat.longValue() + exp.longValue();
                 if (System.currentTimeMillis() < expiration) {
-                    final Authentication authentication = new Authentication(id.toString(), role, true);
+                    final Authentication authentication = new Authentication(id, role, true);
                     SecurityContextHolder.setAuthentication(authentication);
                 }
             } catch (Exception e) {

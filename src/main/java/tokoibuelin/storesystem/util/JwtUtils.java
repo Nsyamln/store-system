@@ -1,8 +1,5 @@
 package tokoibuelin.storesystem.util;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.interfaces.DecodedJWT;
-
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -40,18 +37,16 @@ public final class JwtUtils {
                     offset = i + 1;
                     delimiterCount += 1;
                 } else if (delimiterCount == 1) {
-                    base64UrlEncodedPayload =
-                            new String(chars, offset, i - base64UrlEncodedHeader.length() - 1);
+                    base64UrlEncodedPayload = new String(chars, offset, i - base64UrlEncodedHeader.length() - 1);
                     offset = i + 1;
                     delimiterCount += 1;
-                    base64UrlEncodedDigest =
-                            new String(
-                                    chars,
-                                    offset,
-                                    chars.length
-                                            - base64UrlEncodedHeader.length()
-                                            - base64UrlEncodedPayload.length()
-                                            - 2);
+                    base64UrlEncodedDigest = new String(
+                            chars,
+                            offset,
+                            chars.length
+                                    - base64UrlEncodedHeader.length()
+                                    - base64UrlEncodedPayload.length()
+                                    - 2);
                 }
             }
         }
@@ -79,10 +74,8 @@ public final class JwtUtils {
                             + (bytesKey.length << 3)
                             + " bits which is not secure enough for the HS256 algorithm.  The JWT JWA Specification (RFC 7518, Section 3.2) states that keys used with HS256 MUST have a size >= 256 bits (the key size must be greater than or equal to the hash output size).  Consider using the io.jsonwebtoken.security.Keys class's 'secretKeyFor(SignatureAlgorithm.HS256)' method to create a key guaranteed to be secure enough for HS256.  See https://tools.ietf.org/html/rfc7518#section-3.2 for more information.");
         }
-        final String headerB64Url =
-                Base64Utils.base64UrlEncode(header.toString().getBytes(StandardCharsets.UTF_8));
-        final String payloadB64Url =
-                Base64Utils.base64UrlEncode(payload.toString().getBytes(StandardCharsets.UTF_8));
+        final String headerB64Url = Base64Utils.base64UrlEncode(header.toString().getBytes(StandardCharsets.UTF_8));
+        final String payloadB64Url = Base64Utils.base64UrlEncode(payload.toString().getBytes(StandardCharsets.UTF_8));
         final String algorithm = "HmacSHA256";
         final String data = headerB64Url + "." + payloadB64Url;
         try {
@@ -129,8 +122,10 @@ public final class JwtUtils {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
             Jwt jwt = (Jwt) o;
             return valid == jwt.valid
                     && header.equals(jwt.header)
@@ -253,9 +248,7 @@ public final class JwtUtils {
         public String toString() {
             String nextSeparator = "";
             StringBuilder builder = new StringBuilder(32).append(name).append(start);
-            for (ValueHolder valueHolder = holderHead.next;
-                 valueHolder != null;
-                 valueHolder = valueHolder.next) {
+            for (ValueHolder valueHolder = holderHead.next; valueHolder != null; valueHolder = valueHolder.next) {
                 Object value = valueHolder.value;
                 value = value == null ? "null" : value;
                 builder.append(nextSeparator);
@@ -281,11 +274,5 @@ public final class JwtUtils {
             private ValueHolder next;
         }
     }
-    public static String getUserId(String token){
-        DecodedJWT decodedJWT = JWT.decode( token);
-        System.out.println("Token dari utils : "+token);
-        return decodedJWT.getClaim("userId").asString();
-    }
 
 }
-

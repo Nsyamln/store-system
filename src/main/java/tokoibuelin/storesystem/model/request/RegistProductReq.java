@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 public record RegistProductReq(String productName,
                                String description,
-                               BigDecimal unit,
+                               Long unit,
                                Long price,
                                Long stock,
                                String supplierId,

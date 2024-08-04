@@ -3,6 +3,7 @@ package tokoibuelin.storesystem.service;
 import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import tokoibuelin.storesystem.entity.Address;
 import tokoibuelin.storesystem.entity.User;
 import tokoibuelin.storesystem.model.Authentication;
@@ -14,9 +15,14 @@ import tokoibuelin.storesystem.repository.AddressRepository;
 import tokoibuelin.storesystem.repository.UserRepository;
 import tokoibuelin.storesystem.util.HexUtils;
 import tokoibuelin.storesystem.util.JwtUtils;
+import tokoibuelin.storesystem.util.SecurityContextHolder;
+
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+
+
+
 @Service
 public class UserService extends AbstractService {
     private final UserRepository userRepository;
@@ -55,6 +61,7 @@ public class UserService extends AbstractService {
             return Response.create("08", "02", "password salah", null);
         }
         final Authentication authentication = new Authentication(user.userId(), user.role(), true);
+        //SecurityContextHolder.setAuthentication(authentication);
         System.out.println("auth : "+authentication);
         final long iat = System.currentTimeMillis();
         final long exp = 1000 * 60 * 60 * 24; // 24 hour
@@ -70,11 +77,17 @@ public class UserService extends AbstractService {
         return Response.create("08", "00", "Sukses", token);
     }
 
+    @Transactional
     public Response<Object> registerSupplier(final Authentication authentication, final RegistUserReq req) {
+        System.out.println("Authentication: " + authentication);
+        System.out.println("Request: " + req);
+
         return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
+
             if (req == null) {
                 return Response.badRequest();
             }
+
             final String encoded = passwordEncoder.encode(req.password());
             final User user = new User( //
                     null, //
@@ -83,20 +96,21 @@ public class UserService extends AbstractService {
                     encoded, //
                     User.Role.PEMASOK,//
                     req.phone(),
-                    authentication.id(),
+                    authentication.id(), // pastikan ini juga String
                     null,
                     null,
                     OffsetDateTime.now(),
                     null,
                     null
-
             );
-            final Long saved = userRepository.saveSupplier(user);
 
-            if (0L != saved) {
+            final String savedId = userRepository.saveUser(user); // mengubah dari Long menjadi String
+            System.out.println("Cek save suplier : " + savedId);
+            //  8uyaddressRepository.testInsertAddress();
+            if (savedId != null) {
                 Address address = new Address(
                         null,
-                        user.userId(),
+                        savedId, // gunakan savedId yang benar
                         req.street(),
                         req.rt(),
                         req.rw(),
@@ -105,44 +119,52 @@ public class UserService extends AbstractService {
                         req.city(),
                         req.postalCode()
                 );
-                final long save = addressRepository.saveAddress(address);
-                if(0L == save){
-                    return Response.create("05", "01", "Gagal mendaftarkan seller", null);
+                String  save = addressRepository.saveAddress(address);
+                System.out.println("Cek save Address : " + save);
+                if (null == save) {
+                    return Response.create("05", "01", "Gagal mendaftarkan supplier", null);
                 }
-                return Response.create("05", "00", "Sukses", saved);
+                return Response.create("05", "00", "Sukses", savedId);
             }
 
-            return Response.create("05", "01", "Gagal mendaftarkan seller", null);
+            return Response.create("05", "01", "Gagal mendaftarkan supplier", null);
         });
     }
 
+    @Transactional
     public Response<Object> registerBuyer(final Authentication authentication, final RegistUserReq req) {
-        return precondition(authentication, User.Role.PEMBELI).orElseGet(() -> {
+        System.out.println("Authentication: " + authentication);
+        System.out.println("Request: " + req);
+
+        return precondition(authentication, User.Role.ADMIN).orElseGet(() -> {
+
             if (req == null) {
                 return Response.badRequest();
             }
+
             final String encoded = passwordEncoder.encode(req.password());
             final User user = new User( //
                     null, //
                     req.name(),//
                     req.email(), //
                     encoded, //
-                    User.Role.PEMASOK,//
+                    User.Role.PEMBELI,//
                     req.phone(),
-                    authentication.id(),
+                    authentication.id(), // pastikan ini juga String
                     null,
                     null,
                     OffsetDateTime.now(),
                     null,
                     null
-
             );
-            final Long saved = userRepository.saveBuyer(user);
 
-            if (0L != saved) {
+            final String savedId = userRepository.saveUser(user); // mengubah dari Long menjadi String
+            System.out.println("Cek save suplier : " + savedId);
+            //  8uyaddressRepository.testInsertAddress();
+            if (savedId != null) {
                 Address address = new Address(
                         null,
-                        user.userId(),
+                        savedId, // gunakan savedId yang benar
                         req.street(),
                         req.rt(),
                         req.rw(),
@@ -151,26 +173,30 @@ public class UserService extends AbstractService {
                         req.city(),
                         req.postalCode()
                 );
-                final long save = addressRepository.saveAddress(address);
-                if (0L == save) {
-                    return Response.create("05", "01", "Gagal mendaftarkan seller", null);
+                String  save = addressRepository.saveAddress(address);
+                System.out.println("Cek save Address : " + save);
+                if (null == save) {
+                    return Response.create("05", "01", "Gagal mendaftarkan sebagai User", null);
                 }
-                return Response.create("05", "00", "Sukses", saved);
+                return Response.create("05", "00", "Sukses", savedId);
             }
 
-            return Response.create("05", "01", "Gagal mendaftarkan seller", null);
+            return Response.create("05", "01", "Gagal mendaftarkan sebagai User", null);
         });
     }
 
     public Response<Object> resetPassword(final Authentication authentication, final ResetPasswordReq req) {
-        if (req.newPassword() == null || req.newPassword().isEmpty()) {
-            return Response.create("07", "03", "Password baru tidak boleh kosong", null);
-        }
-        if (req.newPassword().length() < 8) {
-            return Response.create("07", "03", "Password baru harus memiliki minimal 8 karakter", null);
-        }
+
+        System.out.println("Authentication ID (in reset): " + authentication.id());
 
         try {
+            if (req.newPassword() == null || req.newPassword().isEmpty()) {
+                return Response.create("07", "03", "Password baru tidak boleh kosong", null);
+            }
+            if (req.newPassword().length() < 8) {
+                return Response.create("07", "03", "Password baru harus memiliki minimal 8 karakter", null);
+            }
+
             Optional<User> userOpt = userRepository.findById(authentication.id());
             if (userOpt.isEmpty()) {
                 return Response.create("07", "01", "Pengguna tidak ditemukan", null);
@@ -182,7 +208,7 @@ public class UserService extends AbstractService {
                         null);
             }
 
-            if ((user.deletedBy() != null && user.deletedBy() != null) || user.deletedAt() != null) {
+            if (user.deletedBy() != null  || user.deletedAt() != null) {
                 return Response.create("07", "04", "Akun pengguna telah dihapus", null);
             }
 
@@ -195,7 +221,8 @@ public class UserService extends AbstractService {
             UserDto userDto = new UserDto(user.userId(), user.name());
             return Response.create("07", "00", "Password berhasil diperbarui", userDto);
         } catch (Exception e) {
-            return Response.create("07", "02", "Token tidak valid", null);
+            e.printStackTrace();
+            return Response.create("07", "02", "Token tidak valid", e.getMessage());
         }
     }
 
@@ -236,6 +263,7 @@ public class UserService extends AbstractService {
         });
     }
 
+    @Transactional
     public Response<Object> updateProfile(final Authentication authentication, final UpdateProfileReq req) {
         return precondition(authentication, User.Role.ADMIN, User.Role.PEMBELI, User.Role.PEMASOK).orElseGet(() -> {
             Optional<User> userOpt = userRepository.findById(authentication.id());

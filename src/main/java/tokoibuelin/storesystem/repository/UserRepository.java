@@ -15,6 +15,7 @@ import java.sql.*;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 @Repository
@@ -29,8 +30,8 @@ public class UserRepository {
 
     public Page<User> listUsers(int page, int size) {
         final int offset = (page - 1) * size;
-        final String sql = "SELECT * FROM %s WHERE deleted_at is NULL ORDER BY id LIMIT ? OFFSET ?".formatted(User.TABLE_NAME);
-        final String count = "SELECT COUNT(id) FROM %s".formatted(User.TABLE_NAME);
+        final String sql = "SELECT * FROM %s WHERE deleted_at is NULL ORDER BY user_id LIMIT ? OFFSET ?".formatted(User.TABLE_NAME);
+        final String count = "SELECT COUNT(user_id) FROM %s".formatted(User.TABLE_NAME);
 
         final Long totalData = jdbcTemplate.queryForObject(count, Long.class);
         final Long totalPage = (totalData / size) + 1;
@@ -42,7 +43,7 @@ public class UserRepository {
                 final Timestamp createdAt = rs.getTimestamp("created_at");
                 final Timestamp updatedAt = rs.getTimestamp("updated_at");
                 final Timestamp deletedAt = rs.getTimestamp("deleted_at");
-                return new User(rs.getString("id"), //
+                return new User(rs.getString("user_id"), //
                         rs.getString("name"), //
                         rs.getString("email"), //
                         rs.getString("password"), //
@@ -90,9 +91,9 @@ public class UserRepository {
         }));
     }
 
-    public Optional<User> findById(String  id) {
+    public Optional<User> findById(String id) {
         System.out.println("ID nya : " + id);
-        if (id == null || id == "") {
+        if (id == null || id.isEmpty()) {
             return Optional.empty();
         }
         return Optional.ofNullable(jdbcTemplate.query(con -> {
@@ -100,51 +101,54 @@ public class UserRepository {
             ps.setString(1, id);
             return ps;
         }, rs -> {
-            if (rs.getString("id")== null ) {
-                return null;
+            if (rs.next()) { // Pindah ke baris pertama hasil
+                final String userId = rs.getString("user_id");
+                final String name = rs.getString("name");
+                final String email = rs.getString("email");
+                final String password = rs.getString("password");
+                final User.Role role = User.Role.valueOf(rs.getString("role"));
+                final String phone = rs.getString("phone");
+                final String createdBy = rs.getString("created_by");
+                final String updatedBy = rs.getString("updated_by");
+                final String deletedBy = rs.getString("deleted_by");
+                final OffsetDateTime createdAt = rs.getTimestamp("created_at") == null ? null : rs.getTimestamp("created_at").toInstant().atOffset(ZoneOffset.UTC);
+                final OffsetDateTime updatedAt = rs.getTimestamp("updated_at") == null ? null : rs.getTimestamp("updated_at").toInstant().atOffset(ZoneOffset.UTC);
+                final OffsetDateTime deletedAt = rs.getTimestamp("deleted_at") == null ? null : rs.getTimestamp("deleted_at").toInstant().atOffset(ZoneOffset.UTC);
+                return new User(userId, name, email, password, role, phone, createdBy, updatedBy, deletedBy, createdAt, updatedAt, deletedAt);
             }
-            final String name = rs.getString("name");
-            final String email = rs.getString("email");
-            final String password = rs.getString("password");
-            final User.Role role = User.Role.valueOf(rs.getString("role"));
-            final String phone = rs.getString("phone");
-            final String createdBy = rs.getString("created_by");
-            final String updatedBy = rs.getString("updated_by");
-            final String deletedBy = rs.getString("deleted_by");
-            final OffsetDateTime createdAt = rs.getTimestamp("created_at") == null ? null : rs.getTimestamp("created_at").toInstant().atOffset(ZoneOffset.UTC);
-            final OffsetDateTime updatedAt = rs.getTimestamp("updated_at") == null ? null : rs.getTimestamp("updated_at").toInstant().atOffset(ZoneOffset.UTC);
-            final OffsetDateTime deletedAt = rs.getTimestamp("deleted_at") == null ? null : rs.getTimestamp("deleted_at").toInstant().atOffset(ZoneOffset.UTC);
-            return new User(id, name, email, password, role, phone, createdBy, updatedBy, deletedBy, createdAt, updatedAt, deletedAt);
+            return null;
         }));
     }
 
-    public long saveSupplier(final User user) {
+
+    public String saveUser(final User user) {
         final KeyHolder keyHolder = new GeneratedKeyHolder();
         try {
-            if (jdbcTemplate.update(con -> Objects.requireNonNull(user.insert(con)), keyHolder) != 1) {
-                return 0L;
-            } else {
-                return Objects.requireNonNull(keyHolder.getKey()).longValue();
+            int updateCount = jdbcTemplate.update(con -> {
+                PreparedStatement ps = user.insert(con);
+                return ps;
+            }, keyHolder);
+
+            if (updateCount != 1) {
+                return null; // atau return 0L sesuai kebutuhan
             }
+
+            // Ambil hasil dari KeyHolder sebagai String
+            Map<String, Object> keys = keyHolder.getKeys();
+            if (keys != null && keys.containsKey("user_id")) {
+                return (String) keys.get("user_id");
+            }
+
+            return null;
         } catch (Exception e) {
-            log.error("{}", e.getMessage());
-            return 0L;
+            log.error("Error during saveSupplier: {}", e.getMessage());
+            return null; // atau return 0L sesuai kebutuhan
         }
     }
 
-    public long saveBuyer(final User user) {
-        final KeyHolder keyHolder = new GeneratedKeyHolder();
-        try {
-            if (jdbcTemplate.update(con -> Objects.requireNonNull(user.insert(con)), keyHolder) != 1) {
-                return 0L;
-            } else {
-                return Objects.requireNonNull(keyHolder.getKey()).longValue();
-            }
-        } catch (Exception e) {
-            log.error("{}", e.getMessage());
-            return 0L;
-        }
-    }
+
+
+
 
     public String resetPassword(String userId, String newPassword) {
         try {
@@ -160,11 +164,11 @@ public class UserRepository {
             if (rowsUpdated > 0) {
                 return userId;
             } else {
-                return null; // return null to indicate failure
+                return null;
             }
         } catch (DataAccessException e) {
             System.err.println("Error updating password for user id " + userId + ": " + e.getMessage());
-            return null; // return null to indicate failure
+            return null;
         }
     }
 

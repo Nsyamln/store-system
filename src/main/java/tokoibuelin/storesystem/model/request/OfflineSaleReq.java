@@ -2,14 +2,15 @@ package tokoibuelin.storesystem.model.request;
 
 import tokoibuelin.storesystem.entity.SaleDetails;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public record OfflineSaleReq(
 
-     Long totalPrice,
-     String customerId,
-     String orderId,
+     BigDecimal totalPrice,
+//     String customerId,
+//     String orderId,
      String paymentMethod,
-     Long amountPaid,
+     BigDecimal amountPaid,
      List<SaleDetails> saleDetails) {
 }

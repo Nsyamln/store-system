@@ -21,8 +21,8 @@ public  class SpringWebConfig {
 
     @Bean
     public FilterRegistrationBean<AuthenticationFilter> authenticationFilter(Environment env) {
-        final String skJwtKey = env.getProperty("sk.jwt.key");
-        final byte[] jwtKey = HexUtils.hexToBytes(skJwtKey);
+        final String JwtKey = env.getProperty("jwt.secret-key");
+        final byte[] jwtKey = HexUtils.hexToBytes(JwtKey);
         final FilterRegistrationBean<AuthenticationFilter> registrationBean = new FilterRegistrationBean<>();
         registrationBean.setFilter(new AuthenticationFilter(jwtKey));
         registrationBean.addUrlPatterns("/secured/*");

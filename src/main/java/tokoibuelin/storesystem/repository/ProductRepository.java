@@ -8,6 +8,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import tokoibuelin.storesystem.entity.Product;
+import tokoibuelin.storesystem.entity.User;
 import tokoibuelin.storesystem.model.Page;
 
 import java.math.BigDecimal;
@@ -18,6 +19,7 @@ import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -32,8 +34,8 @@ public class ProductRepository {
 
     public Page<Product> listProducts(int page, int size) {
         final int offset = (page - 1) * size;
-        final String sql = "SELECT * FROM %s WHERE deleted_at is NULL ORDER BY id LIMIT ? OFFSET ?".formatted(Product.TABLE_NAME);
-        final String count = "SELECT COUNT(id) FROM %s".formatted(Product.TABLE_NAME);
+        final String sql = "SELECT * FROM %s WHERE deleted_at is NULL ORDER BY product_id LIMIT ? OFFSET ?".formatted(Product.TABLE_NAME);
+        final String count = "SELECT COUNT(product_id) FROM %s".formatted(Product.TABLE_NAME);
 
         final Long totalData = jdbcTemplate.queryForObject(count, Long.class);
         final Long totalPage = (totalData / size) + 1;
@@ -48,7 +50,7 @@ public class ProductRepository {
                         rs.getString("product_id"),
                         rs.getString("product_name"),
                         rs.getString("description"),
-                        rs.getBigDecimal("unit"),
+                        rs.getLong("unit"),
                         rs.getLong("price"),
                         rs.getLong("stock"),
                         rs.getString("supplier_id"),
@@ -69,7 +71,7 @@ public class ProductRepository {
 
     public Optional<Product> findById(String  id) {
         System.out.println("ID nya : " + id);
-        if (id == null || id == "") {
+        if (id == null ) {
             return Optional.empty();
         }
         return Optional.ofNullable(jdbcTemplate.query(con -> {
@@ -77,38 +79,50 @@ public class ProductRepository {
             ps.setString(1, id);
             return ps;
         }, rs -> {
-            if (rs.getString("id")== null ) {
-                return null;
+            if (rs.next()) {
+                final String productName = rs.getString("product_name");
+                final String description = rs.getString("description");
+                final Long unit = rs.getLong("unit");
+                final Long price = rs.getLong("price");
+                final Long stock = rs.getLong("stock");
+                final String supplierId = rs.getString("supplier_id");
+                final String productImage = rs.getString("product_image");
+                final Long purchasePrice = rs.getLong("purchase_price");
+                final String createdBy = rs.getString("created_by");
+                final String updatedBy = rs.getString("updated_by");
+                final String deletedBy = rs.getString("deleted_by");
+                final OffsetDateTime createdAt = rs.getTimestamp("created_at") == null ? null : rs.getTimestamp("created_at").toInstant().atOffset(ZoneOffset.UTC);
+                final OffsetDateTime updatedAt = rs.getTimestamp("updated_at") == null ? null : rs.getTimestamp("updated_at").toInstant().atOffset(ZoneOffset.UTC);
+                final OffsetDateTime deletedAt = rs.getTimestamp("deleted_at") == null ? null : rs.getTimestamp("deleted_at").toInstant().atOffset(ZoneOffset.UTC);
+                return new Product(id, productName, description, unit, price, stock, supplierId, productImage, purchasePrice, createdBy, updatedBy, deletedBy, createdAt, updatedAt, deletedAt);
             }
-            final String productName = rs.getString("product_name");
-            final String description = rs.getString("description");
-            final BigDecimal unit = rs.getBigDecimal("unit");
-            final Long price = rs.getLong("price");
-            final Long stock = rs.getLong("stock");
-            final String supplierId = rs.getString("supplier_id");
-            final String productImage = rs.getString("product_image");
-            final Long purchasePrice = rs.getLong("purchase_price");
-            final String createdBy = rs.getString("created_by");
-            final String updatedBy = rs.getString("updated_by");
-            final String deletedBy = rs.getString("deleted_by");
-            final OffsetDateTime createdAt = rs.getTimestamp("created_at") == null ? null : rs.getTimestamp("created_at").toInstant().atOffset(ZoneOffset.UTC);
-            final OffsetDateTime updatedAt = rs.getTimestamp("updated_at") == null ? null : rs.getTimestamp("updated_at").toInstant().atOffset(ZoneOffset.UTC);
-            final OffsetDateTime deletedAt = rs.getTimestamp("deleted_at") == null ? null : rs.getTimestamp("deleted_at").toInstant().atOffset(ZoneOffset.UTC);
-            return new Product(id, productName, description, unit, price, stock, supplierId, productImage,purchasePrice, createdBy, updatedBy, deletedBy, createdAt, updatedAt, deletedAt);
+            return null;
         }));
     }
 
-    public long saveProduct(final Product product) {
+    public String saveProduct(final Product product) {
         final KeyHolder keyHolder = new GeneratedKeyHolder();
         try {
-            if (jdbcTemplate.update(con -> Objects.requireNonNull(product.insert(con)), keyHolder) != 1) {
-                return 0L;
-            } else {
-                return Objects.requireNonNull(keyHolder.getKey()).longValue();
+            int updateCount = jdbcTemplate.update(con -> {
+                PreparedStatement ps = product.insert(con);
+                System.out.println("Generated SQL: " + ps.toString());
+                return ps;
+            }, keyHolder);
+
+            if (updateCount != 1) {
+                return null; // atau return 0L sesuai kebutuhan
             }
+
+            // Ambil hasil dari KeyHolder sebagai String
+            Map<String, Object> keys = keyHolder.getKeys();
+            if (keys != null && keys.containsKey("product_id")) {
+                return (String) keys.get("product_id");
+            }
+
+            return null;
         } catch (Exception e) {
-            log.error("{}", e.getMessage());
-            return 0L;
+            log.error("Error during saveProduct: {}", e.getMessage());
+            return null; // atau return 0L sesuai kebutuhan
         }
     }
 

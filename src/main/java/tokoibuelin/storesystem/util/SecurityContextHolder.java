@@ -18,6 +18,8 @@ public final class SecurityContextHolder {
      */
     public static Authentication getAuthentication() {
         final Authentication authentication = THREAD_LOCAL.get();
+        System.out.println("CEK THREADLOCAL.get() : "+THREAD_LOCAL.get());
+        System.out.println("CEK THREAD_LOCAL : "+authentication);
         if (authentication == null || !authentication.isAuthenticated()) {
             return UNAUTHENTICATED;
         }
@@ -32,8 +34,11 @@ public final class SecurityContextHolder {
      *
      * @param principal authentication.
      */
+
     public static void setAuthentication(Authentication principal) {
+        System.out.println("CEK PRINCIPAL : "+principal);
         THREAD_LOCAL.set(principal);
+        System.out.println("CEK PRINCIPAL AFTER SET: "+THREAD_LOCAL.get());
     }
 
     /**
@@ -43,3 +48,4 @@ public final class SecurityContextHolder {
         THREAD_LOCAL.remove();
     }
 }
+

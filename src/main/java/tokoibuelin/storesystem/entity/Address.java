@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 
+
 public record Address(
         String addressId,
         String userId,
@@ -20,8 +21,10 @@ public record Address(
 
     public PreparedStatement insert(final Connection connection) {
         try {
-            final String sql = "INSERT INTO " + TABLE_NAME + " (user_id, street, rt, rw, village, district, city, postal_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            final String sql = "INSERT INTO " + "addresses" + " (user_id, street, rt, rw, village, district, city, postal_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
             final PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+
             ps.setString(1, userId);
             ps.setString(2, street);
             ps.setString(3, rt);
@@ -30,9 +33,15 @@ public record Address(
             ps.setString(6, district);
             ps.setString(7, city);
             ps.setString(8, postalCode);
+            System.out.println("Creating PreparedStatement with SQL: " + sql);
+            System.out.println("Setting parameters: userId=" + userId + ", street=" + street + ", rt=" + rt + ", rw=" + rw + ", village=" + village + ", district=" + district + ", city=" + city + ", postalCode=" + postalCode);
             return ps;
         } catch (Exception e) {
+            System.out.println("Error creating PreparedStatement: {}"+ e.getMessage());
             return null;
         }
     }
+
+
+
 }
